@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  postgres-db:
+    image: postgres:latest
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5433:5432"
+    #    volumes:
+    #      - postgres-db:/var/lib/postgresql/data
+    networks:
+      - bloomdoom-network
+
+  spring-boot-app:
+    build:
+      context: .
+    container_name: spring-boot-app
+    environment:
+      SPRING_DATASOURCE_URL: ${DB_URL_YML}
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      SPRING_MAIL_HOST: ${MAIL_HOST}
+      SPRING_MAIL_PORT: ${MAIL_PORT}
+      SPRING_MAIL_USERNAME: ${MAIL_USERNAME}
+      SPRING_MAIL_PASSWORD: ${MAIL_PASSWORD}
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: true
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: true
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres-db
+    networks:
+      - bloomdoom-network
+
+  nginx:
+    image: nginx:latest
+    container_name: bloomdoom-nginx
+    networks:
+      - bloomdoom-network
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+networks:
+  bloomdoom-network:
+    driver: bridge
